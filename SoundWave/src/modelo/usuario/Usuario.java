@@ -1,0 +1,80 @@
+package modelo.usuario;
+
+import enums.TipoSuscripcion;
+import excepciones.contenido.ContenidoNoDisponibleException;
+import excepciones.playlist.ContenidoDuplicadoException;
+import excepciones.usuario.AnuncioRequeridoExeption;
+import excepciones.usuario.EmailInvalidoException;
+import excepciones.usuario.LimiteDiarioAlcanzadoException;
+import excepciones.usuario.PasswordDebilException;
+
+import java.sql.Connection;
+import java.sql.Date;
+import java.util.ArrayList;
+
+public abstract class Usuario {
+
+    //Atributos:
+    protected String id;
+    protected String nombre;
+    protected String email;
+    protected String password;
+    TipoSuscripcion suscripcion;
+    ArrayList<Playlist> misPlaylist;
+    ArrayList<Contenido> historial;
+    protected Date fechaRegistro;
+    ArrayList<Playlist> playlistsSeguidas;
+    ArrayList<Contenido> contenidosLiked;
+
+    //Contructor
+    Usuario(String id, String nombre, String email, String password, TipoSuscripcion suscripcion)
+            throws EmailInvalidoException, PasswordDebilException {
+        if (!email.contains("@")) {
+            throw new EmailInvalidoException("Falta @");
+        }
+        if (password.length() < 8) {
+            throw new PasswordDebilException("La contraseña debe ser mayor a 8 caracteres");
+        }
+        this.id = id;
+        this.nombre = nombre;
+        this.email = email;
+        this.password = password;
+        this.suscripcion = suscripcion;
+    }
+
+    public abstract void reproducir(Contenido contenido)
+            throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoExeption;
+    }
+
+    private Playlist crearPlaylist(String nombrePlaylist) {
+        //crear la playList
+        Playlist nuevaPlaylist = new Playlist(nombrePlaylist);
+        //guardar la nueva playlist en mis playlist
+        this.misPlaylist.add(nuevaPlaylist);
+        //retorno la nueva playlist
+        return nuevaPlaylist;
+    }
+
+    public void seguirPlaylist(Playlist playlist){
+        //verifico si la playList es publica
+        if (playlist.isPublica()) {
+            //si es publica la agrego
+            this.playlistsSeguidas.add(playlist);
+        }
+    }
+
+    public void dejarDeSeguirPlaylist(Playlist playlist) {
+    //accion para dejar de seguir una playlist
+        this.playlistsSeguidas.remove(playlist);
+        }
+
+    public void darLike(Contenido contenido) {
+
+    }
+
+
+
+
+}
+
+
