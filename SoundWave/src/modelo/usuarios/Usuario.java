@@ -17,15 +17,15 @@ public abstract class Usuario {
     protected String nombre;
     protected String email;
     protected String password;
-    TipoSuscripcion suscripcion;
-    ArrayList<Playlist> misPlaylist;
-    ArrayList<Contenido> historial;
+    protected TipoSuscripcion suscripcion;
+    protected ArrayList<Playlist> misPlaylist;
+    protected ArrayList<Contenido> historial;
     protected Date fechaRegistro;
-    ArrayList<Playlist> playlistsSeguidas;
-    ArrayList<Contenido> contenidosLiked;
+    protected ArrayList<Playlist> playlistsSeguidas;
+    protected ArrayList<Contenido> contenidosLiked;
 
-    //Contructor
-    Usuario(String id, String nombre, String email, String password, TipoSuscripcion suscripcion)
+    //Contructores
+    Usuario(String nombre, String email, String password, TipoSuscripcion suscripcion)
             throws EmailInvalidoException, PasswordDebilException {
         if (!email.contains("@")) {
             throw new EmailInvalidoException("Falta @");
@@ -33,7 +33,6 @@ public abstract class Usuario {
         if (password.length() < 8) {
             throw new PasswordDebilException("La contraseña debe ser mayor a 8 caracteres");
         }
-        this.id = id;
         this.nombre = nombre;
         this.email = email;
         this.password = password;
@@ -42,7 +41,6 @@ public abstract class Usuario {
 
     public abstract void reproducir(Contenido contenido)
             throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoExeption;
-    }
 
     private Playlist crearPlaylist(String nombrePlaylist) {
         //crear la playList
@@ -114,14 +112,89 @@ public abstract class Usuario {
 
     //Getters y Setters
     public String getId() {
-        return id;
+        return this.id;
     }
 
     public String getNombre() {
-        return nombre;
+        return this.nombre;
     }
 
     public  String getEmail() {
-    return email;
+    return this.email;
 }
 
+    public String getPassword(){ return this.password;}
+
+    public TipoSuscripcion getSuscripcion(){
+        return this.suscripcion;
+    }
+
+    public ArrayList<Playlist> getMisPlaylists(){
+        return new ArrayList<>(this.misPlaylist);
+    }
+
+    public ArrayList<Contenido> getHistorial(){
+        return new ArrayList<>(this.historial);
+    }
+
+    public Date getFechaRegistro(){
+        return this.fechaRegistro;
+    }
+
+    public ArrayList<Playlist> getPlaylistsSeguidas(){
+        return new ArrayList<>(this.playlistsSeguidas);
+    }
+
+    public ArrayList<Contenido> getContenidosLiked(){
+        return new ArrayList<>(this.contenidosLiked);
+    }
+
+    public void setNombre(String nombre){
+        this.nombre = nombre;
+    }
+
+    public void setEmail(String email) throws EmailInvalidoException {
+        if (!email.contains("@")) {
+            throw new EmailInvalidoException("Email invalido: debe contener @");
+        }
+        this.email = email;
+    }
+
+    public void setPassword(String password) throws PasswordDebilException {
+        if (password.length() < 8) {
+            throw new PasswordDebilException("La contraseña debe tener al menos 8 caracteres");
+        }
+        this.password = password;
+    }
+
+    public void setSuscripcion(TipoSuscripcion suscripcion) {
+        this.suscripcion = suscripcion;
+    }
+
+    //metodos toString, equals y hashCode
+    @Override
+    public String toString() {
+        return "Usuario{" +
+                "id='" + id + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", email='" + email + '\'' +
+                ", suscripcion=" + suscripcion +
+                ", fechaRegistro=" + fechaRegistro +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Usuario usuario = (Usuario) o;
+        return id.equals(usuario.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+
+
+}
