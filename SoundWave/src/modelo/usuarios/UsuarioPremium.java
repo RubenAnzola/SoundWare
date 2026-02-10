@@ -1,4 +1,4 @@
-package modelo.usuario;
+package modelo.usuarios;
 
 public class UsuarioPremium {
 }

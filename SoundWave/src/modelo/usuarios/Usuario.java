@@ -1,14 +1,12 @@
-package modelo.usuario;
+package modelo.usuarios;
 
 import enums.TipoSuscripcion;
 import excepciones.contenido.ContenidoNoDisponibleException;
-import excepciones.playlist.ContenidoDuplicadoException;
 import excepciones.usuario.AnuncioRequeridoExeption;
 import excepciones.usuario.EmailInvalidoException;
 import excepciones.usuario.LimiteDiarioAlcanzadoException;
 import excepciones.usuario.PasswordDebilException;
 
-import java.sql.Connection;
 import java.sql.Date;
 import java.util.ArrayList;
 
@@ -58,23 +56,72 @@ public abstract class Usuario {
     public void seguirPlaylist(Playlist playlist){
         //verifico si la playList es publica
         if (playlist.isPublica()) {
-            //si es publica la agrego
+        //si es publica la agrego
             this.playlistsSeguidas.add(playlist);
         }
     }
 
     public void dejarDeSeguirPlaylist(Playlist playlist) {
-    //accion para dejar de seguir una playlist
+        //accion para dejar de seguir una playlist
         this.playlistsSeguidas.remove(playlist);
-        }
-
-    public void darLike(Contenido contenido) {
-
     }
 
+    public void darLike(Contenido contenido) {
+        if (!this.contenidosLiked.contains(contenido)) {
+            this.contenidosLiked.add(contenido);
+        }
+    }
 
+    public void quitarLike(Contenido contenido){
+        this.contenidosLiked.remove(contenido);
+    }
 
+    boolean validarEmail() throws EmailInvalidoException {
+        //Valido que el email contenga @
+        if (!this.email.contains("@")) {
+            throw new EmailInvalidoException("Email invalido: debe contener @");
+        }
+        return true;
+    }
 
+    boolean validarPassword() throws PasswordDebilException {
+        //Valido que la contraseña tenga al menos 8 caracteres
+        if (this.password.length() < 8) {
+            throw new PasswordDebilException("La contraseña debe tener al menos 8 caracteres");
+        }
+        return true;
+    }
+
+    public void agregarAlHistorial(Contenido contenido){
+        //Valido si el contenido ya existe en el historial
+        if(!this.historial.contains(contenido)){
+            //Si el historial está lleno (límite de 100), elimino el más antiguo
+            if(this.historial.size() >= 100){
+                this.historial.remove(0); //Elimino el primer elemento (más antiguo)
+            }
+            //Agrego el nuevo contenido al historial
+            this.historial.add(contenido);
+        }
+    }
+
+    public void limpiarHistorial(){
+        this.historial.clear();
+    }
+
+    public boolean esPremium(){
+        return this.suscripcion == TipoSuscripcion.PREMIUM;
+    }
+
+    //Getters y Setters
+    public String getId() {
+        return id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public  String getEmail() {
+    return email;
 }
-
 
