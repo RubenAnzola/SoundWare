@@ -2,12 +2,14 @@ package modelo.usuarios;
 
 import enums.TipoSuscripcion;
 import excepciones.contenido.ContenidoNoDisponibleException;
-import excepciones.usuario.AnuncioRequeridoExeption;
+import excepciones.usuario.AnuncioRequeridoException;
 import excepciones.usuario.EmailInvalidoException;
 import excepciones.usuario.LimiteDiarioAlcanzadoException;
 import excepciones.usuario.PasswordDebilException;
+import modelo.contenido.Contenido;
+import modelo.plataforma.Anuncio;
 
-import java.sql.Date;
+import java.util.Date;
 
 public class UsuarioGratuito extends Usuario {
 
@@ -35,7 +37,7 @@ public class UsuarioGratuito extends Usuario {
     }
 
     @Override
-    public void reproducir(Contenido contenido) throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoExeption {
+    public void reproducir(Contenido contenido) throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoException {
         // Validar que el contenido existe
         if(contenido == null){
             throw new ContenidoNoDisponibleException("El contenido no está disponible");
@@ -53,11 +55,11 @@ public class UsuarioGratuito extends Usuario {
 
         // Verificar si debe ver anuncio
         if (debeVerAnuncio()) {
-            throw new AnuncioRequeridoExeption("Es hora de escuchar un anuncio. Por favor, disfruta de un anuncio para continuar escuchando tu música.");
+            throw new AnuncioRequeridoException("Es hora de escuchar un anuncio. Por favor, disfruta de un anuncio para continuar escuchando tu música.");
         }
 
         // Reproducir el contenido
-        agregarAlHistorial(contenido);
+        super.agregarAlHistorial(contenido);
         contenido.aumentarReproducciones();
 
         // Actualizar contadores

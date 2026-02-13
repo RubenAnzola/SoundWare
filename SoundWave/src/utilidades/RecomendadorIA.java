@@ -3,6 +3,7 @@ package utilidades;
 import enums.AlgoritmoRecomendacion;
 import excepciones.recomendacion.RecomendacionException;
 import interfaces.Recomendador;
+import modelo.contenido.Contenido;
 import modelo.usuarios.Usuario;
 
 import java.util.ArrayList;
@@ -101,21 +102,131 @@ public class RecomendadorIA implements Recomendador {
 
     @Override
     public ArrayList<Contenido> obtenerSimilares(Contenido contenido) throws RecomendacionException {
-        return null;
+        if (contenido == null) {
+            throw new RecomendacionException("El contenido no puede ser null");
+        }
+
+        ArrayList<Contenido> similares = new ArrayList<>();
+        ArrayList<String> tagsContenido = contenido.getTags();
+
+        // Buscar contenidos similares en el catálogo
+        for (Contenido item : catalogoReferencia) {
+            if (!item.equals(contenido)) {
+                // Calcular similitud basada en tags
+                int coincidencias = 0;
+                for (String tag : item.getTags()) {
+                    if (tagsContenido.contains(tag)) {
+                        coincidencias++;
+                    }
+                }
+
+                // Si hay al menos 1 coincidencia, agregarlo
+                if (coincidencias > 0) {
+                    similares.add(item);
+                }
+            }
+        }
+
+        // Ordenar por número de reproducciones (más populares primero)
+        similares.sort((c1, c2) -> Integer.compare(c2.getReproducciones(), c1.getReproducciones()));
+
+        // Retornar máximo 10
+        return new ArrayList<>(similares.subList(0, Math.min(similares.size(), 10)));
     }
 
-    // ========== MÉTODOS AUXILIARES ==========
+    // ========== MÉTODOS PROPIOS ==========
 
-    /**
-     * Actualiza las preferencias de un usuario basándose en su historial
-     */
+    public void entrenarModelo(ArrayList<Usuario> usuarios) {
+        if (usuarios == null || usuarios.isEmpty()) {
+            return;
+        }
+
+        // Limpiar matrices anteriores
+        matrizPreferencias.clear();
+        historialCompleto.clear();
+
+        // Procesar cada usuario
+        for (Usuario usuario : usuarios) {
+            // Guardar historial completo
+            historialCompleto.put(usuario.getId(), new ArrayList<>(usuario.getHistorial()));
+
+            // Actualizar preferencias
+            actualizarPreferencias(usuario);
+        }
+
+        // Marcar modelo como entrenado
+        modeloEntrenado = true;
+    }
+
+    public void entrenarModelo(ArrayList<Usuario> usuarios, ArrayList<Contenido> catalogo) {
+        // Establecer catálogo de referencia
+        setCatalogoReferencia(catalogo);
+
+        // Entrenar con usuarios
+        entrenarModelo(usuarios);
+    }
+
+    public double calcularSimilitud(Usuario u1, Usuario u2) {
+        if (u1 == null || u2 == null) {
+            return 0.0;
+        }
+
+        ArrayList<String> pref1 = matrizPreferencias.get(u1.getId());
+        ArrayList<String> pref2 = matrizPreferencias.get(u2.getId());
+
+        if (pref1 == null || pref2 == null || pref1.isEmpty() || pref2.isEmpty()) {
+            return 0.0;
+        }
+
+        // Calcular coincidencias
+        int coincidencias = 0;
+        for (String pref : pref1) {
+            if (pref2.contains(pref)) {
+                coincidencias++;
+            }
+        }
+
+        // Similitud = coincidencias / total único
+        int totalUnico = pref1.size() + pref2.size() - coincidencias;
+        return totalUnico > 0 ? (double) coincidencias / totalUnico : 0.0;
+    }
+
     public void actualizarPreferencias(Usuario usuario) {
-        // TODO: Este método extrae géneros/categorías del historial del usuario
-        // y los guarda en matrizPreferencias
+        if (usuario == null) {
+            return;
+        }
 
-        // Por ahora, crear una lista vacía para evitar null
+        ArrayList<Contenido> historial = usuario.getHistorial();
+        if (historial == null || historial.isEmpty()) {
+            matrizPreferencias.put(usuario.getId(), new ArrayList<>());
+            return;
+        }
+
         ArrayList<String> preferencias = new ArrayList<>();
-        this.matrizPreferencias.put(usuario.getId(), preferencias);
+
+        // Extraer tags de todos los contenidos del historial
+        for (Contenido contenido : historial) {
+            for (String tag : contenido.getTags()) {
+                if (!preferencias.contains(tag)) {
+                    preferencias.add(tag);
+                }
+            }
+        }
+
+        matrizPreferencias.put(usuario.getId(), preferencias);
+    }
+
+    public HashMap<String, Integer> obtenerGenerosPopulares() {
+        HashMap<String, Integer> popularidad = new HashMap<>();
+
+        // Contar frecuencia de cada preferencia
+        for (ArrayList<String> preferencias : matrizPreferencias.values()) {
+            for (String pref : preferencias) {
+                popularidad.put(pref, popularidad.getOrDefault(pref, 0) + 1);
+            }
+        }
+
+        return popularidad;
     }
 
     /**
@@ -123,9 +234,60 @@ public class RecomendadorIA implements Recomendador {
      * @return valor entre 0.0 y 1.0
      */
     private double calcularSimilitudContenido(Contenido contenido, ArrayList<String> preferencias) {
-        // TODO: Implementar lógica de similitud
-        // Por ejemplo: contar cuántos géneros/tags del contenido coinciden con preferencias
-        return 0.0; // Por ahora retorna 0
+        if (contenido == null || preferencias == null || preferencias.isEmpty()) {
+            return 0.0;
+        }
+
+        ArrayList<String> tagsContenido = contenido.getTags();
+        if (tagsContenido.isEmpty()) {
+            return 0.0;
+        }
+
+        // Contar coincidencias
+        int coincidencias = 0;
+        for (String tag : tagsContenido) {
+            if (preferencias.contains(tag)) {
+                coincidencias++;
+            }
+        }
+
+        // Similitud = coincidencias / total de tags del contenido
+        return (double) coincidencias / tagsContenido.size();
     }
 
+    // ========== GETTERS Y SETTERS ==========
+
+    public AlgoritmoRecomendacion getAlgoritmo() {
+        return algoritmo;
+    }
+
+    public void setAlgoritmo(AlgoritmoRecomendacion algoritmo) {
+        this.algoritmo = algoritmo;
+    }
+
+    public double getUmbralSimilitud() {
+        return umbralSimilitud;
+    }
+
+    public void setUmbralSimilitud(double umbralSimilitud) {
+        this.umbralSimilitud = umbralSimilitud;
+    }
+
+    public boolean isModeloEntrenado() {
+        return modeloEntrenado;
+    }
+
+    public HashMap<String, ArrayList<String>> getMatrizPreferencias() {
+        HashMap<String, ArrayList<String>> copia = new HashMap<>();
+        for (String key : matrizPreferencias.keySet()) {
+            copia.put(key, new ArrayList<>(matrizPreferencias.get(key)));
+        }
+        return copia;
+    }
+
+    public void setCatalogoReferencia(ArrayList<Contenido> catalogo) {
+        if (catalogo != null) {
+            this.catalogoReferencia = new ArrayList<>(catalogo);
+        }
+    }
 }

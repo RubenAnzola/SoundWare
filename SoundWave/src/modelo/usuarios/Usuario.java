@@ -2,13 +2,16 @@ package modelo.usuarios;
 
 import enums.TipoSuscripcion;
 import excepciones.contenido.ContenidoNoDisponibleException;
-import excepciones.usuario.AnuncioRequeridoExeption;
+import excepciones.usuario.AnuncioRequeridoException;
 import excepciones.usuario.EmailInvalidoException;
 import excepciones.usuario.LimiteDiarioAlcanzadoException;
 import excepciones.usuario.PasswordDebilException;
+import modelo.contenido.Contenido;
+import modelo.plataforma.Playlist;
 
-import java.sql.Date;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.UUID;
 
 public abstract class Usuario {
 
@@ -27,22 +30,41 @@ public abstract class Usuario {
     //Contructores
     Usuario(String nombre, String email, String password, TipoSuscripcion suscripcion)
             throws EmailInvalidoException, PasswordDebilException {
+        // Validar email
+        if (email == null || email.trim().isEmpty()) {
+            throw new EmailInvalidoException("El email no puede estar vacío");
+        }
         if (!email.contains("@")) {
             throw new EmailInvalidoException("Falta @");
         }
-        if (password.length() < 8) {
-            throw new PasswordDebilException("La contraseña debe ser mayor a 8 caracteres");
+        if (email.endsWith("@") || email.startsWith("@")) {
+            throw new EmailInvalidoException("Formato de email inválido");
         }
+
+        // Validar password
+        if (password == null || password.length() < 8) {
+            throw new PasswordDebilException("La contraseña debe tener al menos 8 caracteres");
+        }
+
+        // Inicializar atributos básicos
+        this.id = UUID.randomUUID().toString();
         this.nombre = nombre;
         this.email = email;
         this.password = password;
         this.suscripcion = suscripcion;
+
+        // Inicializar colecciones
+        this.misPlaylist = new ArrayList<>();
+        this.historial = new ArrayList<>();
+        this.playlistsSeguidas = new ArrayList<>();
+        this.contenidosLiked = new ArrayList<>();
+        this.fechaRegistro = new Date();
     }
 
     public abstract void reproducir(Contenido contenido)
-            throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoExeption;
+            throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoException;
 
-    private Playlist crearPlaylist(String nombrePlaylist) {
+    public Playlist crearPlaylist(String nombrePlaylist) {
         //crear la playList
         Playlist nuevaPlaylist = new Playlist(nombrePlaylist);
         //guardar la nueva playlist en mis playlist
@@ -53,7 +75,7 @@ public abstract class Usuario {
 
     public void seguirPlaylist(Playlist playlist){
         //verifico si la playList es publica
-        if (playlist.isPublica()) {
+        if (playlist.isEsPublica()) {
         //si es publica la agrego
             this.playlistsSeguidas.add(playlist);
         }

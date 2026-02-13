@@ -6,5 +6,5 @@ import excepciones.descarga.LimiteDescargasException;
 public interface Descargable {
     boolean descargar() throws LimiteDescargasException, ContenidoYaDescargadoException;
     boolean eliminarDescarga();
-    int espacioRequertido();
+    int espacioRequerido();
 }

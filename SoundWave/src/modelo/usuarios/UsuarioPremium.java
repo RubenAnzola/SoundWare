@@ -4,10 +4,11 @@ import enums.TipoSuscripcion;
 import excepciones.contenido.ContenidoNoDisponibleException;
 import excepciones.descarga.ContenidoYaDescargadoException;
 import excepciones.descarga.LimiteDescargasException;
-import excepciones.usuario.AnuncioRequeridoExeption;
+import excepciones.usuario.AnuncioRequeridoException;
 import excepciones.usuario.EmailInvalidoException;
 import excepciones.usuario.LimiteDiarioAlcanzadoException;
 import excepciones.usuario.PasswordDebilException;
+import modelo.contenido.Contenido;
 
 import java.util.ArrayList;
 
@@ -44,7 +45,7 @@ public class UsuarioPremium extends Usuario {
     //Implementación del método abstracto
     @Override
     public void reproducir(Contenido contenido)
-            throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoExeption {
+            throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoException {
         if(contenido == null){
             throw new ContenidoNoDisponibleException("El contenido no está disponible");
         }
