@@ -60,9 +60,11 @@ public class EstadisticasCreador {
     }
         //Metodos
     public String generarReporte() {
+        // Voy armando un reporte completo con todas las estadísticas
         StringBuilder reporte = new StringBuilder();
 
-        reporte.append("Estadísticas del Creador: ").append(creador.getNombre()).append("\n");
+        // Uso el nombre del canal (no el nombre personal del creador)
+        reporte.append("Estadísticas del Creador: ").append(creador.getNombreCanal()).append("\n");
         reporte.append("Total de Episodios: ").append(totalEpisodios).append("\n");
         reporte.append("Total de Reproducciones: ").append(totalReproducciones).append("\n");
         reporte.append("Promedio de Reproducciones por Episodio: ")
@@ -71,12 +73,14 @@ public class EstadisticasCreador {
         reporte.append("Total de Likes: ").append(totalLikes).append("\n");
         reporte.append("Duración Total: ").append(formatearDuracion(duracionTotalSegundos)).append("\n");
 
+        // Si hay un episodio destacado, lo muestro
         if (episodioMasPopular != null) {
             reporte.append("Episodio Más Popular: ").append(episodioMasPopular.getTitulo())
                     .append(" (").append(episodioMasPopular.getReproducciones())
                     .append(" reproducciones)").append("\n");
         }
 
+        // Muestro cuántos episodios hay por cada temporada
         reporte.append("Episodios por Temporada:\n");
         for (Integer temporada : episodiosPorTemporada.keySet()) {
             reporte.append("  Temporada ").append(temporada).append(": ")

@@ -46,10 +46,18 @@ public class UsuarioPremium extends Usuario {
     @Override
     public void reproducir(Contenido contenido)
             throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoException {
+        // Primero valido que me hayan pasado un contenido válido
         if(contenido == null){
             throw new ContenidoNoDisponibleException("El contenido no está disponible");
         }
-        // Reproducir sin anuncios ni límite diario (ventaja Premium)
+
+        // Luego checo que el contenido esté disponible para reproducirse
+        if(!contenido.isDisponible()){
+            throw new ContenidoNoDisponibleException("El contenido '" + contenido.getTitulo() + "' no está disponible actualmente");
+        }
+
+        // Como soy Premium, puedo reproducir sin anuncios y sin límites
+        // Solo guardo en el historial y aumento las reproducciones
         agregarAlHistorial(contenido);
         contenido.aumentarReproducciones();
     }

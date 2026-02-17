@@ -30,74 +30,84 @@ public abstract class Usuario {
     //Contructores
     Usuario(String nombre, String email, String password, TipoSuscripcion suscripcion)
             throws EmailInvalidoException, PasswordDebilException {
-        // Validar email
+        // Primero validamos el email para asegurarnos que tiene el formato correcto
         if (email == null || email.trim().isEmpty()) {
             throw new EmailInvalidoException("El email no puede estar vacío");
         }
+        // Checamos que tenga el arroba
         if (!email.contains("@")) {
             throw new EmailInvalidoException("Falta @");
         }
+        // El arroba no puede estar al inicio ni al final
         if (email.endsWith("@") || email.startsWith("@")) {
             throw new EmailInvalidoException("Formato de email inválido");
         }
 
-        // Validar password
+        // Ahora validamos que la contraseña sea segura (mínimo 8 caracteres)
         if (password == null || password.length() < 8) {
             throw new PasswordDebilException("La contraseña debe tener al menos 8 caracteres");
         }
 
-        // Inicializar atributos básicos
-        this.id = UUID.randomUUID().toString();
+        // Si todo está bien, inicializo los datos del usuario
+        this.id = UUID.randomUUID().toString(); // Genero un ID único
         this.nombre = nombre;
         this.email = email;
         this.password = password;
         this.suscripcion = suscripcion;
 
-        // Inicializar colecciones
+        // Creo las listas vacías para las colecciones del usuario
         this.misPlaylist = new ArrayList<>();
         this.historial = new ArrayList<>();
         this.playlistsSeguidas = new ArrayList<>();
         this.contenidosLiked = new ArrayList<>();
-        this.fechaRegistro = new Date();
+        this.fechaRegistro = new Date(); // Guardo cuando se registró
     }
 
+    // Método abstracto que cada tipo de usuario implementa a su manera
     public abstract void reproducir(Contenido contenido)
             throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoException;
 
     public Playlist crearPlaylist(String nombrePlaylist) {
-        //crear la playList
-        Playlist nuevaPlaylist = new Playlist(nombrePlaylist);
-        //guardar la nueva playlist en mis playlist
+        // Creo una nueva playlist con el nombre que me pasan y este usuario como creador
+        Playlist nuevaPlaylist = new Playlist(nombrePlaylist, this);
+        // La agrego a mi lista de playlists
         this.misPlaylist.add(nuevaPlaylist);
-        //retorno la nueva playlist
+        // Devuelvo la playlist para que se pueda usar
         return nuevaPlaylist;
     }
 
     public void seguirPlaylist(Playlist playlist){
-        //verifico si la playList es publica
-        if (playlist.isEsPublica()) {
-        //si es publica la agrego
+        // Solo puedo seguir playlists públicas y que no esté siguiendo ya
+        if (playlist.isEsPublica() && !this.playlistsSeguidas.contains(playlist)) {
+            // La agrego a mis playlists seguidas
             this.playlistsSeguidas.add(playlist);
+            // Sumo un seguidor a la playlist
+            playlist.incrementarSeguidores();
         }
     }
 
     public void dejarDeSeguirPlaylist(Playlist playlist) {
-        //accion para dejar de seguir una playlist
-        this.playlistsSeguidas.remove(playlist);
+        // Intento quitar la playlist de mi lista de seguidas
+        if(this.playlistsSeguidas.remove(playlist)){
+            // Si se pudo quitar, resto un seguidor a la playlist
+            playlist.decrementarSeguidores();
+        }
     }
 
     public void darLike(Contenido contenido) {
+        // Solo agrego el like si no lo tengo ya (evito duplicados)
         if (!this.contenidosLiked.contains(contenido)) {
             this.contenidosLiked.add(contenido);
         }
     }
 
     public void quitarLike(Contenido contenido){
+        // Simplemente quito el contenido de mis likes
         this.contenidosLiked.remove(contenido);
     }
 
     boolean validarEmail() throws EmailInvalidoException {
-        //Valido que el email contenga @
+        // Checo que el email tenga arroba
         if (!this.email.contains("@")) {
             throw new EmailInvalidoException("Email invalido: debe contener @");
         }
@@ -105,7 +115,7 @@ public abstract class Usuario {
     }
 
     boolean validarPassword() throws PasswordDebilException {
-        //Valido que la contraseña tenga al menos 8 caracteres
+        // La contraseña tiene que tener mínimo 8 caracteres
         if (this.password.length() < 8) {
             throw new PasswordDebilException("La contraseña debe tener al menos 8 caracteres");
         }
@@ -113,22 +123,24 @@ public abstract class Usuario {
     }
 
     public void agregarAlHistorial(Contenido contenido){
-        //Valido si el contenido ya existe en el historial
+        // Primero reviso si ya está en el historial para no duplicar
         if(!this.historial.contains(contenido)){
-            //Si el historial está lleno (límite de 100), elimino el más antiguo
+            // Si ya tengo 100 elementos (el límite), quito el más viejo
             if(this.historial.size() >= 100){
-                this.historial.remove(0); //Elimino el primer elemento (más antiguo)
+                this.historial.remove(0); // El primero es el más antiguo
             }
-            //Agrego el nuevo contenido al historial
+            // Ahora sí agrego el nuevo contenido al final
             this.historial.add(contenido);
         }
     }
 
     public void limpiarHistorial(){
+        // Borro todo el historial de una vez
         this.historial.clear();
     }
 
     public boolean esPremium(){
+        // Compruebo si mi suscripción es Premium
         return this.suscripcion == TipoSuscripcion.PREMIUM;
     }
 

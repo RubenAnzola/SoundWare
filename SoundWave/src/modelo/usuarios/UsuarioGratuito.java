@@ -38,40 +38,45 @@ public class UsuarioGratuito extends Usuario {
 
     @Override
     public void reproducir(Contenido contenido) throws ContenidoNoDisponibleException, LimiteDiarioAlcanzadoException, AnuncioRequeridoException {
-        // Validar que el contenido existe
+        // Primero me aseguro que me pasaron un contenido válido
         if(contenido == null){
             throw new ContenidoNoDisponibleException("El contenido no está disponible");
         }
 
-        // Verificar si es un nuevo día y reiniciar contadores
+        // Checo que el contenido esté disponible para reproducirse
+        if(!contenido.isDisponible()){
+            throw new ContenidoNoDisponibleException("El contenido '" + contenido.getTitulo() + "' no está disponible actualmente");
+        }
+
+        // Si cambió el día, reinicio mis contadores para el nuevo día
         if(nuevoDia()){
             reiniciarContadorDiario();
         }
 
-        // Verificar límite diario
+        // Reviso si ya alcancé mi límite diario (50 reproducciones)
         if (!puedeReproducir()) {
             throw new LimiteDiarioAlcanzadoException("Has alcanzado el límite diario de reproducciones gratuitas. Considera suscribirte a Premium para disfrutar sin límites.");
         }
 
-        // Verificar si debe ver anuncio
+        // Si ya escuché 3 canciones sin anuncio, me toca ver uno
         if (debeVerAnuncio()) {
             throw new AnuncioRequeridoException("Es hora de escuchar un anuncio. Por favor, disfruta de un anuncio para continuar escuchando tu música.");
         }
 
-        // Reproducir el contenido
+        // Si pasé todas las validaciones, puedo reproducir el contenido
         super.agregarAlHistorial(contenido);
         contenido.aumentarReproducciones();
 
-        // Actualizar contadores
-        this.reproduccionesHoy++;
-        this.cancionesSinAnuncio++;
-        this.fechaUltimaReproduccion = new Date(System.currentTimeMillis());
+        // Actualizo mis contadores después de reproducir
+        this.reproduccionesHoy++; // Una reproducción más hoy
+        this.cancionesSinAnuncio++; // Una canción más sin ver anuncio
+        this.fechaUltimaReproduccion = new Date(System.currentTimeMillis()); // Guardo cuándo reproduje
     }
 
     private boolean nuevoDia() {
-        // Verifica si la fecha de última reproducción es diferente a hoy
+        // Checo si es un día diferente desde la última vez que reproduje algo
         if (this.fechaUltimaReproduccion == null) {
-            return true;
+            return true; // Si nunca he reproducido, es nuevo día
         }
         Date hoy = new Date(System.currentTimeMillis());
         // Comparar solo la fecha (ignorar hora)

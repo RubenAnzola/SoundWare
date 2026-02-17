@@ -51,44 +51,52 @@ public class Playlist {
         this.maxContenidos = MAX_CONTENIDOS_DEFAULT;
     }
 
-    public Playlist(String nombrePlaylist) {
-    }
 
     // Métodos
     public void agregarContenido(Contenido contenido) throws PlaylistLlenaException, ContenidoDuplicadoException{
+        // Primero checo si ya llegué al límite de contenidos
         if (contenidos.size() >= maxContenidos) {
             throw new PlaylistLlenaException("La playlist ha alcanzado su capacidad máxima.");
         }
+        // Luego verifico que no esté duplicado
         if (contenidos.contains(contenido)) {
             throw new ContenidoDuplicadoException("El contenido ya existe en la playlist.");
         }
+        // Si pasó todas las validaciones, lo agrego
         contenidos.add(contenido);
     }
 
     public boolean eliminarContenido(String idContenido){
+        // Elimino el contenido que tenga ese ID y devuelvo si se pudo eliminar
         return contenidos.removeIf(contenido -> contenido.getId().equals(idContenido));
     }
 
     public boolean eliminarContenido(Contenido contenido){
+        // Intento eliminar el contenido directo
         return contenidos.remove(contenido);
     }
 
     public void ordenarPor(CriterioOrden criterio) throws PlaylistVaciaException{
+        // No puedo ordenar una playlist vacía
         if(contenidos.isEmpty()){
             throw new PlaylistVaciaException("La playlist está vacía.");
         }
 
         switch(criterio){
             case POPULARIDAD:
+                // Ordeno por reproducciones de mayor a menor (los más populares primero)
                 contenidos.sort(Comparator.comparingInt(Contenido::getReproducciones).reversed());
                 break;
             case DURACION:
+                // Ordeno por duración de menor a mayor (los más cortos primero)
                 contenidos.sort(Comparator.comparingInt(Contenido::getDuracionSegundos));
                 break;
             case ALFABETICO:
+                // Ordeno alfabéticamente por el título (A-Z)
                 contenidos.sort(Comparator.comparing(Contenido::getTitulo));
                 break;
             case ALEATORIO:
+                // Mezclo todo al azar (shuffle)
                 Collections.shuffle(contenidos);
                 break;
             default:
@@ -97,6 +105,7 @@ public class Playlist {
     }
 
     public int getDuracionTotal(){
+        // Sumo todas las duraciones de los contenidos
         return contenidos.stream()
                 .mapToInt(Contenido::getDuracionSegundos)
                 .sum();

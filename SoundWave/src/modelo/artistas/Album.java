@@ -43,25 +43,41 @@ public class Album {
     // Métodos de composición / creación
     public Cancion crearCancion(String titulo, int duracionSegundos, GeneroMusical genero)
             throws AlbumCompletoException, DuracionInvalidaException {
+        // Primero checo si ya llegué al límite de canciones del álbum
         if (canciones.size() >= MAX_CANCIONES) {
             throw new AlbumCompletoException("El álbum ha alcanzado el límite máximo de " + MAX_CANCIONES + " canciones");
         }
 
+        // Creo la nueva canción con los datos que me pasaron
         Cancion cancion = new Cancion(titulo, duracionSegundos, artista, genero);
+        // Le asigno este álbum a la canción
         cancion.setAlbum(this);
+        // La agrego a la lista de canciones del álbum
         canciones.add(cancion);
+
+        // También la agrego a la discografía del artista (MUY IMPORTANTE)
+        // Así el artista sabe todas las canciones que tiene
+        artista.publicarCancion(cancion);
+
+        // Devuelvo la canción que acabo de crear
         return cancion;
     }
 
     public Cancion crearCancion(String titulo, int duracionSegundos, GeneroMusical genero, String letra, boolean explicit)
             throws AlbumCompletoException, DuracionInvalidaException {
+        // Mismo chequeo: si ya está lleno el álbum, no puedo agregar más
         if (canciones.size() >= MAX_CANCIONES) {
             throw new AlbumCompletoException("El álbum ha alcanzado el límite máximo de " + MAX_CANCIONES + " canciones");
         }
 
+        // Esta versión incluye letra y si es explícita
         Cancion cancion = new Cancion(titulo, duracionSegundos, artista, genero, letra, explicit);
         cancion.setAlbum(this);
         canciones.add(cancion);
+
+        // Igual agrego a la discografía del artista
+        artista.publicarCancion(cancion);
+
         return cancion;
     }
 

@@ -2,6 +2,7 @@ package modelo.artistas;
 
 import enums.CategoriaPodcast;
 import excepciones.artista.LimiteEpisodiosException;
+import excepciones.contenido.EpisodioNoEncontradoException;
 import modelo.contenido.Podcast;
 import utilidades.EstadisticasCreador;
 
@@ -55,8 +56,11 @@ public class Creador {
     }
 
     public void agregarRedSocial(String plataforma, String url) {
+        // Checo que me hayan pasado datos válidos
         if (plataforma != null && url != null) {
-            redesSociales.put(plataforma, url);
+            // Guardo la plataforma en minúsculas para que sea más fácil buscar después
+            // Por ejemplo: "Twitter", "TWITTER" y "twitter" se guardan como "twitter"
+            redesSociales.put(plataforma.toLowerCase(), url);
         }
     }
 
@@ -140,8 +144,13 @@ public class Creador {
         return episodios.size();
     }
 
-    public void eliminarEpisodio(String idEliminar) {
-        episodios.removeIf(episodio -> episodio.getId().equals(idEliminar));
+    public void eliminarEpisodio(String idEliminar) throws EpisodioNoEncontradoException {
+        // Intento eliminar el episodio que tenga ese ID
+        boolean eliminado = episodios.removeIf(episodio -> episodio.getId().equals(idEliminar));
+        // Si no se pudo eliminar es porque no existía
+        if (!eliminado) {
+            throw new EpisodioNoEncontradoException("No se encontró el episodio con ID: " + idEliminar);
+        }
     }
 
     public double calcularPromedioReproducciones() {

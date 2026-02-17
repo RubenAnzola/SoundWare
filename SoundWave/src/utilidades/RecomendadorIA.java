@@ -1,6 +1,8 @@
 package utilidades;
 
 import enums.AlgoritmoRecomendacion;
+import excepciones.recomendacion.HistorialVacioException;
+import excepciones.recomendacion.ModeloNoEntrenadoException;
 import excepciones.recomendacion.RecomendacionException;
 import interfaces.Recomendador;
 import modelo.contenido.Contenido;
@@ -44,59 +46,59 @@ public class RecomendadorIA implements Recomendador {
 
     @Override
     public ArrayList<Contenido> recomendar(Usuario usuario) throws RecomendacionException {
-        // Validar que el modelo esté entrenado
+        // Primero verifico que el modelo esté entrenado, sino no puedo recomendar nada
         if (!this.modeloEntrenado) {
-            throw new RecomendacionException("El modelo no está entrenado. Llama a entrenarModelo() primero.");
+            throw new ModeloNoEntrenadoException("El modelo no está entrenado. Llama a entrenarModelo() primero.");
         }
 
-        // Validar que el usuario no sea null
+        // Me aseguro que me pasaron un usuario válido
         if (usuario == null) {
             throw new RecomendacionException("El usuario no puede ser null.");
         }
 
-        // Obtener historial del usuario
+        // Obtengo el historial del usuario para saber qué ha escuchado
         ArrayList<Contenido> historial = usuario.getHistorial();
 
-        // Validar que el usuario tenga historial
+        // Si no tiene historial, no puedo recomendarle nada
         if (historial == null || historial.isEmpty()) {
-            throw new RecomendacionException("El usuario no tiene historial de reproducciones.");
+            throw new HistorialVacioException("El usuario no tiene historial de reproducciones.");
         }
 
-        // Obtener ID del usuario
+        // Obtengo el ID del usuario para buscar sus preferencias
         String idUsuario = usuario.getId();
 
-        // Obtener preferencias del usuario desde la matriz
+        // Busco las preferencias del usuario en mi matriz
         ArrayList<String> preferenciasUsuario = this.matrizPreferencias.get(idUsuario);
 
-        // Si no hay preferencias calculadas, actualizarlas primero
+        // Si no tengo sus preferencias guardadas, las calculo ahora
         if (preferenciasUsuario == null) {
             actualizarPreferencias(usuario);
             preferenciasUsuario = this.matrizPreferencias.get(idUsuario);
         }
 
-        // Crear una lista para guardar las recomendaciones
+        // Creo una lista donde voy a guardar las recomendaciones
         ArrayList<Contenido> recomendaciones = new ArrayList<>();
 
-        // Recorrer el catalogoReferencia
+        // Reviso todo el catálogo para ver qué le puede gustar
         for (Contenido contenido : this.catalogoReferencia) {
-            // Verificar que el contenido NO esté en el historial
+            // Solo recomiendo cosas que NO ha escuchado
             if (!historial.contains(contenido)) {
-                // Calcular la similitud del contenido con las preferencias del usuario
+                // Calculo qué tan parecido es este contenido a sus gustos
                 double similitud = calcularSimilitudContenido(contenido, preferenciasUsuario);
 
-                // Si la similitud es >= umbralSimilitud, agregar a recomendaciones
+                // Si la similitud supera mi umbral, lo agrego a las recomendaciones
                 if (similitud >= this.umbralSimilitud) {
                     recomendaciones.add(contenido);
                 }
             }
         }
 
-        // Limitar las recomendaciones a un máximo de 10
+        // Si no encontré nada que recomendar, devuelvo lista vacía
         if (recomendaciones.isEmpty()) {
-            return new ArrayList<>(); // Retornar lista vacía si no hay recomendaciones
+            return new ArrayList<>();
         }
 
-        // Retornar las primeras 10 recomendaciones (o todas si hay menos de 10)
+        // Devuelvo máximo 10 recomendaciones (o todas si hay menos de 10)
         return new ArrayList<>(recomendaciones.subList(0, Math.min(recomendaciones.size(), 10)));
     }
 
@@ -137,48 +139,52 @@ public class RecomendadorIA implements Recomendador {
     // ========== MÉTODOS PROPIOS ==========
 
     public void entrenarModelo(ArrayList<Usuario> usuarios) {
+        // Si no me pasaron usuarios o la lista está vacía, no hago nada
         if (usuarios == null || usuarios.isEmpty()) {
             return;
         }
 
-        // Limpiar matrices anteriores
+        // Limpio lo que tenía guardado antes para empezar de cero
         matrizPreferencias.clear();
         historialCompleto.clear();
 
-        // Procesar cada usuario
+        // Proceso cada usuario para aprender sus gustos
         for (Usuario usuario : usuarios) {
-            // Guardar historial completo
+            // Guardo una copia de su historial completo
             historialCompleto.put(usuario.getId(), new ArrayList<>(usuario.getHistorial()));
 
-            // Actualizar preferencias
+            // Calculo y guardo sus preferencias basadas en lo que ha escuchado
             actualizarPreferencias(usuario);
         }
 
-        // Marcar modelo como entrenado
+        // Marco que ya entrené el modelo y está listo para usar
         modeloEntrenado = true;
     }
 
     public void entrenarModelo(ArrayList<Usuario> usuarios, ArrayList<Contenido> catalogo) {
-        // Establecer catálogo de referencia
+        // Primero guardo el catálogo de referencia
         setCatalogoReferencia(catalogo);
 
-        // Entrenar con usuarios
+        // Luego entreno con los usuarios
         entrenarModelo(usuarios);
     }
 
     public double calcularSimilitud(Usuario u1, Usuario u2) {
+        // Si alguno es null, no hay similitud
         if (u1 == null || u2 == null) {
             return 0.0;
         }
 
+        // Obtengo las preferencias de ambos usuarios
         ArrayList<String> pref1 = matrizPreferencias.get(u1.getId());
         ArrayList<String> pref2 = matrizPreferencias.get(u2.getId());
 
+        // Si no tengo preferencias de alguno, tampoco hay similitud
         if (pref1 == null || pref2 == null || pref1.isEmpty() || pref2.isEmpty()) {
             return 0.0;
         }
 
-        // Calcular coincidencias
+        // Cuento cuántas preferencias tienen en común
         int coincidencias = 0;
         for (String pref : pref1) {
             if (pref2.contains(pref)) {
@@ -186,33 +192,42 @@ public class RecomendadorIA implements Recomendador {
             }
         }
 
-        // Similitud = coincidencias / total único
+        // Calculo la similitud: coincidencias / total único
+        // (Índice de Jaccard: intersección / unión)
         int totalUnico = pref1.size() + pref2.size() - coincidencias;
         return totalUnico > 0 ? (double) coincidencias / totalUnico : 0.0;
     }
 
     public void actualizarPreferencias(Usuario usuario) {
+        // Si no hay usuario, no hago nada
         if (usuario == null) {
             return;
         }
 
+        // Obtengo su historial de reproducciones
         ArrayList<Contenido> historial = usuario.getHistorial();
+
+        // Si no tiene historial, guardo preferencias vacías
         if (historial == null || historial.isEmpty()) {
             matrizPreferencias.put(usuario.getId(), new ArrayList<>());
             return;
         }
 
+        // Voy a extraer todos los tags únicos de lo que ha escuchado
         ArrayList<String> preferencias = new ArrayList<>();
 
-        // Extraer tags de todos los contenidos del historial
+        // Recorro todo su historial
         for (Contenido contenido : historial) {
+            // Por cada contenido, saco sus tags
             for (String tag : contenido.getTags()) {
+                // Solo agrego el tag si no lo tengo ya
                 if (!preferencias.contains(tag)) {
                     preferencias.add(tag);
                 }
             }
         }
 
+        // Guardo las preferencias del usuario en mi matriz
         matrizPreferencias.put(usuario.getId(), preferencias);
     }
 

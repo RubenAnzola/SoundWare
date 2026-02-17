@@ -327,20 +327,26 @@ public class Plataforma {
     // ==================== ESTADÍSTICAS ====================
 
     public String obtenerEstadisticasGenerales() {
+        // Voy armando un reporte con todas las estadísticas de la plataforma
         StringBuilder stats = new StringBuilder();
         stats.append("=== ESTADÍSTICAS GENERALES DE ").append(nombre).append(" ===\n");
-        stats.append("Total de usuarios: ").append(usuarios.size()).append("\n");
+        // Cuento todos los usuarios y los separo por tipo
+        stats.append("Total de Usuarios: ").append(usuarios.size()).append("\n");
         stats.append("  - Usuarios Premium: ").append(getUsuariosPremium().size()).append("\n");
         stats.append("  - Usuarios Gratuitos: ").append(getUsuariosGratuitos().size()).append("\n");
-        stats.append("Total de contenido: ").append(catalogo.size()).append("\n");
+        // Cuento todo el contenido disponible
+        stats.append("Total de Contenido: ").append(catalogo.size()).append("\n");
         stats.append("  - Canciones: ").append(getCanciones().size()).append("\n");
         stats.append("  - Podcasts: ").append(getPodcasts().size()).append("\n");
+        // Cuento artistas (separados en verificados y no verificados)
         stats.append("Total de artistas: ").append(artistas.size()).append("\n");
         stats.append("  - Verificados: ").append(getArtistasVerificados().size()).append("\n");
+        // Otros datos generales
         stats.append("Total de creadores: ").append(creadores.size()).append("\n");
         stats.append("Total de álbumes: ").append(albumes.size()).append("\n");
         stats.append("Playlists públicas: ").append(playlistsPublicas.size()).append("\n");
         stats.append("Anuncios reproducidos: ").append(totalAnunciosReproducidos).append("\n");
+        // Devuelvo todo el reporte como un String
         return stats.toString();
     }
 

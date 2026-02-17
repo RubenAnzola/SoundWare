@@ -23,26 +23,27 @@ public class Cancion extends Contenido implements Reproducible, Descargable {
     private boolean descargado;
 
 
-    // Constructor
+    // Constructor básico: solo con lo esencial
     public Cancion(String titulo, int duracionSegundos, Artista artista, GeneroMusical genero) throws DuracionInvalidaException {
-        super(titulo, duracionSegundos);
+        super(titulo, duracionSegundos); // Llamo al constructor de Contenido
         this.artista = artista;
         this.genero = genero;
-        this.letra = "";
-        this.explicit = false;
-        this.album = null;
-        this.audioURL = "https://audio.soundwave.com/default/" + getId();
-        this.ISRC = generarISRC();
+        this.letra = null; // Dejo la letra en null porque no me la pasaron
+        this.explicit = false; // Por defecto no es explícita
+        this.album = null; // Todavía no está en un álbum
+        this.audioURL = "https://audio.soundwave.com/default/" + getId(); // URL del audio
+        this.ISRC = generarISRC(); // Código único de la canción
         this.reproduciendo = false;
         this.pausado = false;
         this.descargado = false;
     }
 
+    // Constructor completo: incluye letra y si es explícita
     public Cancion(String titulo, int duracionSegundos, Artista artista, GeneroMusical genero, String letra, boolean explicit) throws DuracionInvalidaException {
         super(titulo, duracionSegundos);
         this.artista = artista;
         this.genero = genero;
-        this.letra = letra != null ? letra : "";
+        this.letra = letra; // Guardo la letra tal como viene (puede ser null o vacía)
         this.explicit = explicit;
         this.album = null;
         this.audioURL = "https://audio.soundwave.com/default/" + getId();
@@ -142,9 +143,11 @@ public class Cancion extends Contenido implements Reproducible, Descargable {
 
     //Metodos Propios:
     public String obtenerLetra() throws LetraNoDisponibleException {
+        // Si la letra es null o está vacía (solo espacios), lanzo excepción
         if (letra == null || letra.trim().isEmpty()) {
             throw new LetraNoDisponibleException("La letra de '" + getTitulo() + "' no está disponible");
         }
+        // Si tiene letra, la devuelvo
         return letra;
     }
 
